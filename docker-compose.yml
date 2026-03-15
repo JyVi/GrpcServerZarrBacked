@@ -1,0 +1,27 @@
+services:
+  grpc-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: dataingest-server
+    ports:
+      - "50051:50051"
+    volumes:
+      # persistent zarr storage — survives container restarts
+      - zarr-data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import grpc; c = grpc.insecure_channel('localhost:50051'); grpc.channel_ready_future(c).result(timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  zarr-data:
+    driver: local

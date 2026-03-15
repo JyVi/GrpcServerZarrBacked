@@ -1,0 +1,22 @@
+[build-system]
+requires = ["uv-build<=10.0"]
+build-backend = "uv_build"
+
+[project]
+name = "grpcserverzarrbacked"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "grpcio>=1.78.0",
+    "grpcio-reflection>=1.78.0",
+    "grpcio-tools>=1.78.0",
+    "jupyter>=1.1.1",
+    "protobuf>=6.33.5",
+    "rich>=14.3.3",
+    "zarr>=3.1.5",
+]
+
+[tool.uv_build]
+where = ["."]

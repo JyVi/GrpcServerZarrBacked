@@ -1,0 +1,131 @@
+syntax = "proto3";
+
+service DataIngest {
+    rpc IngestVolume(stream Volume) returns (IngestVolumeResponse);
+    rpc IngestMesh(stream Mesh) returns (IngestMeshResponse);
+
+    rpc ListData(Empty) returns (DataList);
+    rpc GetVolumeMetatdata(DataRequest) returns (VolumeMetadata);
+    rpc GetMeshMetatdata(DataRequest) returns (MeshMetadata);
+    rpc FetchVolume(DataRequest) returns (stream Volume);
+    rpc FetchMesh(DataRequest) returns (stream Mesh);
+
+    rpc SubscribeNotifications(NotificationRequest) returns (stream Notification);
+}
+
+message VolumeHeader {
+    string volume_id = 1;
+    repeated int64 shape = 2;
+    string dtype = 3;
+    repeated int64 chunkshape = 4;
+    map<string, string> metadata = 5;
+}
+
+message VolumeData {
+    bytes data = 1;
+}
+
+message Volume {
+    oneof chunk_type {
+        VolumeHeader header = 1;
+        VolumeData data = 2;
+    }
+}
+
+message MeshHeader {
+    string mesh_id = 1;
+    repeated int64 vertices_shape = 2;
+    repeated int64 faces_shape = 3;
+    string vertices_dtype = 4;
+    string faces_dtype = 5;
+    repeated int64 vertices_chunkshape = 6;
+    repeated int64 faces_chunkshape = 7;
+    map<string, string> metadata = 8;
+}
+
+message MeshData {
+    oneof array {
+        bytes vertices = 1;
+        bytes faces = 2;  
+    }
+}
+
+message Mesh {
+    oneof chunk_type {
+        MeshHeader header = 1;
+        MeshData data = 2;
+    }
+}
+
+message IngestVolumeResponse {
+    bool success = 1;
+    string mesg = 2;
+    string volume_id = 3;
+}
+
+message IngestMeshResponse {
+    bool success = 1;
+    string mesg = 2;
+    string mesh_id = 3;
+}
+
+message VolumeMetadata {
+    string volume_id = 1;
+    repeated int64 shape = 2;
+    string dtype = 3;
+    int64 size_bytes = 4;
+    string created_at = 5;
+    repeated int64 chunkshape = 6;
+    map<string, string> metadata = 7;
+}
+
+message MeshMetadata {
+    string mesh_id = 1;
+    repeated int64 vertices_shape = 2;
+    repeated int64 faces_shape = 3;
+    string vertices_dtype = 4;
+    string faces_dtype = 5;
+    int64 vertices_size_bytes = 6;
+    int64 faces_size_bytes = 7;
+    string created_at = 8;
+    repeated int64 vertices_chunkshape = 9;
+    repeated int64 faces_chunkshape = 10;
+    map<string, string> metadata = 11;
+}
+
+message DataList {
+    repeated VolumeMetadata volumes = 1;
+    repeated MeshMetadata meshes = 2;
+}
+
+message DataRequest {
+    string id = 1;
+}
+
+enum DataType {
+    VOLUME = 0;
+    MESH = 1;
+}
+
+enum NotificationType {
+    ADDED = 0;
+    UPDATED = 1;
+    DELETED = 2;
+}
+
+message Notification {
+    NotificationType type = 1;
+    DataType data_type = 2;
+    string id = 3;
+    oneof metadata {
+        VolumeMetadata volume_metadata = 4;
+        MeshMetadata mesh_metadata = 5;
+    }
+}
+
+message NotificationRequest {
+    bool auto_download = 1;
+    repeated DataType data_types = 2;
+}
+
+message Empty {}
