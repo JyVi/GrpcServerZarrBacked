@@ -299,7 +299,7 @@ class DataIngestServicer(Server_pb2_grpc.DataIngestServicer):
         # Case B: ingest in progress — tap the live stream
         if volume_id in zarr_service._volume_pending:
             logger.info("Fetching volume '%s' from live stream (ingest in progress)", volume_id)
-            queue: asyncio.Queue = asyncio.Queue()
+            queue: asyncio.Queue = asyncio.Queue(maxsize=10)
             self._volume_stream_subs.setdefault(volume_id, []).append(queue)
             try:
                 while True:

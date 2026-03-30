@@ -1,5 +1,6 @@
 import io
 import zarr
+import math
 import logging
 import asyncio
 import numpy as np
@@ -13,7 +14,9 @@ from zarr.core.buffer import default_buffer_prototype
 from zarr.core.group import GroupMetadata, ArrayV2Metadata, ArrayV3Metadata
 from zarr.storage import MemoryStore, LocalStore
 from zarr.experimental.cache_store import CacheStore
-
+logging.basicConfig(level=logging.INFO, force=True,)
+logging.getLogger("Server.ZarrService").setLevel(logging.DEBUG)
+logging.getLogger(__name__).setLevel(logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 ZARR_ROOT         = "data/zarrlocalstorage.zarr"
@@ -166,12 +169,14 @@ class ZarrService:
         metadata:   dict[str, str] | None = None,
     ) -> dict:
         assert self._volume_group is not None, "_volume_group not initialised, call initialise() first"
-        
+        logger.info("Writing volume '%s'  shape=%s  dtype=%s", volume_id, shape, dtype)
         arr = np.frombuffer(data, dtype=dtype).reshape(shape)
+        logger.info("Volume '%s' array created from bytes  shape=%s  dtype=%s", volume_id, arr.shape, arr.dtype)
         vol_group = self._volume_group.require_group(volume_id)
  
         # coalese chunks
         chunks = tuple(min(s, 64) for s in shape)
+        logger.info("Volume '%s' chunks set to %s", volume_id, chunks)
  
         if "data" in vol_group:
             del vol_group["data"]
@@ -241,7 +246,7 @@ class ZarrService:
         block_cursor = self._volume_pending[volume_id]
 
         # total number of blocks per dimension
-        n_blocks = [s // c for s, c in zip(z_arr.shape, z_arr.chunks)]
+        n_blocks = [math.ceil(s / c) for s, c in zip(z_arr.shape, z_arr.chunks)]
 
         # convert flat block counter to nd block index
         block_idx = cast(tuple[int, ...], np.unravel_index(block_cursor, n_blocks))
@@ -318,7 +323,7 @@ class ZarrService:
         z_arr = volume["data"]
         assert isinstance(z_arr, zarr.Array), f"Expected Array for volume '{volume_id}', got {type(z_arr)}"
         
-        block_counts = [s // c for s, c in zip(z_arr.shape, z_arr.chunks)]
+        block_counts = [math.ceil(s / c) for s, c in zip(z_arr.shape, z_arr.chunks)]
         for block_idx in np.ndindex(*block_counts):
             yield z_arr.get_block_selection(block_idx)
  
@@ -448,7 +453,8 @@ class ZarrService:
         assert isinstance(z_arr, zarr.Array)
 
         block_cursor = self._mesh_pending[mesh_id][array_name]
-        n_blocks     = [s // c for s, c in zip(z_arr.shape, z_arr.chunks)]
+        n_blocks = [math.ceil(s / c) for s, c in zip(z_arr.shape, z_arr.chunks)]
+
         block_idx = cast(tuple[int, ...], np.unravel_index(block_cursor, n_blocks))
         block_shape  = tuple(
             min(c, s - b * c)
@@ -528,7 +534,7 @@ class ZarrService:
         for name in ("vertices", "faces"):
             z_arr        = mesh_group[name]
             assert isinstance(z_arr, zarr.Array), f"Expected Array for mesh '{mesh_id}' {name}, got {type(z_arr)}"
-            block_counts = [s // c for s, c in zip(z_arr.shape, z_arr.chunks)]
+            block_counts = [math.ceil(s / c) for s, c in zip(z_arr.shape, z_arr.chunks)]
 
             for block_idx in np.ndindex(*block_counts):
                 yield name, z_arr.get_block_selection(block_idx)

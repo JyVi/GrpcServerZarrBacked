@@ -13,8 +13,18 @@ dependencies = [
     "grpcio-reflection>=1.78.0",
     "grpcio-tools>=1.78.0",
     "jupyter>=1.1.1",
+    "matplotlib>=3.10.8",
+    "medvol>=0.0.20",
+    "nibabel>=5.4.2",
+    "pandas>=3.0.1",
+    "plotly>=6.6.0",
     "protobuf>=6.33.5",
+    "pyarrow>=23.0.1",
+    "pydot>=4.0.1",
+    "pygraphviz>=1.14",
     "rich>=14.3.3",
+    "scikit-image>=0.26.0",
+    "scikit-learn>=1.8.0",
     "zarr>=3.1.5",
 ]
 

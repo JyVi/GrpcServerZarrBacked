@@ -7,6 +7,15 @@ wheels/
 data/
 *.egg-info
 *.swp
+*.gz
+*.dot
+*.csv
+*.pdf
+*.svg
+*.html
+*.parquet
+*.png
+.DS_Store
 
 # Virtual environments
 .venv
